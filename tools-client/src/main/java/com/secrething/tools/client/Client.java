@@ -79,12 +79,9 @@ public class Client {
     private void connect(Bootstrap b) throws InterruptedException {
         if (null == this.channel){
             ChannelFuture f = b.connect(proxy_ip, proxy_prot).sync().syncUninterruptibly();
-            f.channel().closeFuture().addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete(ChannelFuture future) throws Exception {
-                    logger.info("connection closed");
-                    channel = null;
-                }
+            f.channel().closeFuture().addListener((ChannelFutureListener) future -> {
+                logger.info("connection closed");
+                channel = null;
             });
             this.channel = f.channel();
         }
@@ -104,13 +101,6 @@ public class Client {
         channel.writeAndFlush(protocol);
     }
 
-    /**
-     * @param model      {@link RequestEntity}
-     * @param remoteAddr 远程的Ip地址，例如自家的测试服务器(***.***.***.163)
-     * @param port       Server启动时绑定的端口
-     * @return
-     * @throws Exception
-     */
     public static String sendRequest(RequestEntity request) throws Exception {
         MessageFuture future = new MessageFuture(request);
         Bootstrap b = null;

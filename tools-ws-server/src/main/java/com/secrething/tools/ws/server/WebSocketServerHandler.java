@@ -34,12 +34,39 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
  * @create 2018/3/15
  */
 public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> {
+    public static final ConcurrentHashMap<String, ChannelGroup> GROUPS = new ConcurrentHashMap<>();
     private static final Logger logger = LoggerFactory.getLogger(WebSocketServerHandshaker.class);
-
     //public static ChannelGroup group = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
     private static final String GROUP_NAME_S = "groupNames";
-    private WebSocketServerHandshaker handshaker;
     private static final AttributeKey<String> GROUP_NAME = AttributeKey.valueOf(GROUP_NAME_S);
+    // websocket 服务的 uri
+    private static final String WEBSOCKET_PATH = "/websocket";
+    // 本次请求的 code
+    private static final String HTTP_REQUEST_STRING = "request";
+    private WebSocketServerHandshaker handshaker;
+
+    private static void sendHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, DefaultFullHttpResponse res) {
+        // 返回应答给客户端
+        if (res.status().code() != 200) {
+            ByteBuf buf = Unpooled.copiedBuffer(res.status().toString(), CharsetUtil.UTF_8);
+            res.content().writeBytes(buf);
+            buf.release();
+        }
+        // 如果是非Keep-Alive，关闭连接
+        ChannelFuture f = ctx.channel().writeAndFlush(res);
+        if (!isKeepAlive(req) || res.status().code() != 200) {
+            f.addListener(ChannelFutureListener.CLOSE);
+        }
+    }
+
+    private static boolean isKeepAlive(FullHttpRequest req) {
+        return false;
+    }
+
+    private static String getWebSocketLocation(FullHttpRequest req) {
+        String location = req.headers().get(HOST) + WEBSOCKET_PATH;
+        return "ws://" + location;
+    }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -71,7 +98,6 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
         ctx.flush();
     }
-
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
@@ -137,33 +163,4 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
             handshaker.handshake(ctx.channel(), req);
         }
     }
-
-    private static void sendHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, DefaultFullHttpResponse res) {
-        // 返回应答给客户端
-        if (res.status().code() != 200) {
-            ByteBuf buf = Unpooled.copiedBuffer(res.status().toString(), CharsetUtil.UTF_8);
-            res.content().writeBytes(buf);
-            buf.release();
-        }
-        // 如果是非Keep-Alive，关闭连接
-        ChannelFuture f = ctx.channel().writeAndFlush(res);
-        if (!isKeepAlive(req) || res.status().code() != 200) {
-            f.addListener(ChannelFutureListener.CLOSE);
-        }
-    }
-
-    private static boolean isKeepAlive(FullHttpRequest req) {
-        return false;
-    }
-
-    private static String getWebSocketLocation(FullHttpRequest req) {
-        String location = req.headers().get(HOST) + WEBSOCKET_PATH;
-        return "ws://" + location;
-    }
-
-    public static final ConcurrentHashMap<String, ChannelGroup> GROUPS = new ConcurrentHashMap<>();
-    // websocket 服务的 uri
-    private static final String WEBSOCKET_PATH = "/websocket";
-    // 本次请求的 code
-    private static final String HTTP_REQUEST_STRING = "request";
 }

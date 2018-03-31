@@ -11,10 +11,7 @@ public class SerializeUtil {
 
     public static <T> byte[] serialize(T t) {
         try {
-
-            if (null == t) {
-                throw new NullPointerException();
-            }
+            Assert.notNull(t);
             Class<T> clzz = (Class<T>) t.getClass();
             RuntimeSchema<T> schema = RuntimeSchema.createFrom(clzz);
             byte[] bs = ProtostuffIOUtil.toByteArray(t, schema, LinkedBuffer.allocate(LinkedBuffer.DEFAULT_BUFFER_SIZE));
@@ -26,6 +23,8 @@ public class SerializeUtil {
 
     public static <T> T deserialize(byte[] bs, Class<T> clzz) {
         try {
+            Assert.notNull(bs);
+            Assert.notNull(clzz);
             RuntimeSchema<T> schema = RuntimeSchema.createFrom(clzz);
             T t = schema.newMessage();
             ProtostuffIOUtil.mergeFrom(bs, t, schema);

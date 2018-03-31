@@ -2,7 +2,9 @@ package com.secrething.tools.common.async;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
 /**
@@ -11,9 +13,9 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 public abstract class AbstractAdapterFuture<R> implements Future<R> {
 
     private final Sync sync = new Sync();
-    private volatile R result;
     private final List<IFutureCallback> syncCallbacks = new ArrayList<>();
     private final List<AsyncCallProxy> asyncCallbacks = new ArrayList<>();
+    private volatile R result;
 
     protected AbstractAdapterFuture() {
     }
@@ -45,6 +47,7 @@ public abstract class AbstractAdapterFuture<R> implements Future<R> {
         synchronized (syncCallbacks) {
             for (IFutureCallback callback : syncCallbacks)
                 callback.call();
+            syncCallbacks.clear();
         }
     }
 
@@ -53,6 +56,7 @@ public abstract class AbstractAdapterFuture<R> implements Future<R> {
             for (AsyncCallProxy proxy : asyncCallbacks) {
                 proxy.execute();
             }
+            asyncCallbacks.clear();
         }
     }
 
@@ -68,28 +72,24 @@ public abstract class AbstractAdapterFuture<R> implements Future<R> {
         }
     }
 
-    protected void addAsyncCallback(final Executor taskExecutor, final IFutureCallback callback) {
+    protected void addAsyncCallback(final Executor taskExecutor,IFutureCallback callback) {
         if (null == taskExecutor || null == callback)
             throw new NullPointerException("executor or callback can not be null");
         synchronized (asyncCallbacks) {
             if (isDone()) {
-                taskExecutor.execute(new Runnable() {
-                    public void run() {
-                        callback.call();
-                    }
-                });
+                taskExecutor.execute(callback::call);
                 return;
             }
             asyncCallbacks.add(new AsyncCallProxy(taskExecutor, callback));
         }
     }
 
-    public R get() throws InterruptedException, ExecutionException {
+    public R get() {
         sync.acquire(-1);
         return result;
     }
 
-    public R get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public R get(long timeout, TimeUnit unit) throws InterruptedException {
         sync.tryAcquireNanos(-1, unit.toNanos(timeout));
         return result;
     }

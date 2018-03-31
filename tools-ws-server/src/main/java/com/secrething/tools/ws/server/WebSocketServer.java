@@ -15,12 +15,13 @@ import java.util.concurrent.CountDownLatch;
  */
 public class WebSocketServer {
     private static final Logger logger = LoggerFactory.getLogger(WebSocketServer.class);
+    private final CountDownLatch countDownLatch = new CountDownLatch(1);
     private int port;
 
     public WebSocketServer(int port) {
         this.port = port;
     }
-    private final CountDownLatch countDownLatch = new CountDownLatch(1);
+
     public void run() throws Exception {
         ServerBootstrap b = ServerBootstrapFactory.newNioServerBootstrap();
         try {
@@ -30,8 +31,8 @@ public class WebSocketServer {
             System.out.println("server started !");
             f.channel().closeFuture().sync();
         } finally {
-            b.childGroup().shutdownGracefully();
-            b.group().shutdownGracefully();
+            b.config().childGroup().shutdownGracefully();
+            b.config().group().shutdownGracefully();
         }
 
     }

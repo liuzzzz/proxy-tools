@@ -1,7 +1,6 @@
 package com.secrething.tools.server.handler;
 
 import com.secrething.tools.common.protocol.MessageProtocol;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.timeout.IdleState;
@@ -14,8 +13,8 @@ import org.slf4j.LoggerFactory;
  */
 public class ServerHeartHandler extends SimpleChannelInboundHandler<MessageProtocol> {
     private static final Logger logger = LoggerFactory.getLogger(ServerHeartHandler.class);
-    private int times = 0;
     private final int maxTimes;
+    private int times = 0;
 
     public ServerHeartHandler(int maxTimeoutTimes) {
         this.maxTimes = maxTimeoutTimes;
@@ -34,7 +33,7 @@ public class ServerHeartHandler extends SimpleChannelInboundHandler<MessageProto
             if (event.state() == IdleState.READER_IDLE) {
                 if (times < maxTimes) {
                     times++;
-                } else{
+                } else {
                     logger.info("five heartbeat cycles not read, so colse this channel");
                     ctx.close();
                 }

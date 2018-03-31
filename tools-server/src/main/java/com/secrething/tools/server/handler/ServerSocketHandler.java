@@ -8,7 +8,6 @@ import com.secrething.tools.common.protocol.ResponseEntity;
 import com.secrething.tools.common.utils.MesgFormatter;
 import com.secrething.tools.common.utils.SerializeUtil;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.SimpleChannelInboundHandler;
 import net.sf.cglib.reflect.FastClass;
 import net.sf.cglib.reflect.FastMethod;
@@ -30,7 +29,7 @@ public class ServerSocketHandler extends SimpleChannelInboundHandler<MessageProt
 
     public void channelRead0(ChannelHandlerContext ctx, MessageProtocol inputMsg) throws Exception {
 
-        if (MessageProtocol.PROXY == inputMsg.getMesg_type()){
+        if (MessageProtocol.PROXY == inputMsg.getMesg_type()) {
             Object result = "request fail";
             RequestEntity request = null;
             ResponseEntity respnseModel = new ResponseEntity();
@@ -58,7 +57,7 @@ public class ServerSocketHandler extends SimpleChannelInboundHandler<MessageProt
             outMsg.setMessageUID(inputMsg.getMessageUID());
             outMsg.setMesg_type(MessageProtocol.PROXY);
             ctx.writeAndFlush(outMsg);
-        }else
+        } else
             ctx.fireChannelRead(inputMsg);
 
     }

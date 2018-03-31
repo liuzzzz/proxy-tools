@@ -21,6 +21,14 @@ public class Server {
         this.port = port;
     }
 
+    public static void main(String[] args) throws Exception {
+        int port = 9999;
+        if (args.length == 1) {
+            port = Integer.valueOf(args[0]).intValue();
+        }
+        (new Server(port)).run();
+    }
+
     public void run() throws Exception {
         //暂时只用 nio方式吧
         ServerBootstrap b = ServerBootstrapFactory.newNioServerBootstrap();
@@ -30,17 +38,9 @@ public class Server {
             logger.info("server started !");
             f.channel().closeFuture().sync();
         } finally {
-            b.childGroup().shutdownGracefully();
-            b.group().shutdownGracefully();
+            b.config().childGroup().shutdownGracefully();
+            b.config().group().shutdownGracefully();
         }
 
-    }
-
-    public static void main(String[] args) throws Exception {
-        int port = 9999;
-        if (args.length == 1) {
-            port = Integer.valueOf(args[0]).intValue();
-        }
-        (new Server(port)).run();
     }
 }
