@@ -21,7 +21,7 @@ public final class Param {
 
     public enum Type {
         BASIC,
-        REFERENCE;
+        REFERENCE
     }
 
     public Class getParamType() {

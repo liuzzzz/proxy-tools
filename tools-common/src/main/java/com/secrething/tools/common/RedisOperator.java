@@ -78,11 +78,11 @@ public class RedisOperator {
         return jedisPubSub != null && jedisPubSub.isSubscribed();
     }
 
-    public static interface Listener {
-        public void onMessage(String channel, String message);
+    public  interface Listener {
+         void onMessage(String channel, String message);
     }
 
-    public static interface RedisCallback<K> {
+    public  interface RedisCallback<K> {
         K call(Jedis jedis);
     }
 

@@ -22,7 +22,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<MessageProtocol> 
 
     public void channelRead0(ChannelHandlerContext ctx, MessageProtocol mesg) throws Exception {
         if (mesg.getMesg_type() == MessageProtocol.PROXY) {
-            ResponseEntity respnse = (ResponseEntity) SerializeUtil.deserialize(mesg.getContent(), ResponseEntity.class);
+            ResponseEntity respnse = SerializeUtil.deserialize(mesg.getContent(), ResponseEntity.class);
             MessageFuture future = Client.futureConcurrentMap.get(mesg.getMessageUID());
             if (null != future)
                 future.done(respnse);

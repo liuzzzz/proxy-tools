@@ -1,9 +1,11 @@
 package com.secrething.tools.client;
 
+import com.google.common.cache.LoadingCache;
 import com.secrething.tools.common.contant.ConfigProp;
 import com.secrething.tools.common.protocol.MessageProtocol;
 import com.secrething.tools.common.protocol.RequestEntity;
 import com.secrething.tools.common.protocol.ResponseEntity;
+import com.secrething.tools.common.utils.CacheBuilder;
 import com.secrething.tools.common.utils.SerializeUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -26,7 +28,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Client {
     public static final String proxy_ip;
     public static final int proxy_prot;
-    public static final ConcurrentMap<String, MessageFuture> futureConcurrentMap = new ConcurrentHashMap<>();
+    static LoadingCache<String,MessageFuture> loadingCache = CacheBuilder.build(16384,1,TimeUnit.MINUTES);
+    public static final ConcurrentMap<String, MessageFuture> futureConcurrentMap = loadingCache.asMap();
     public static final Logger logger = LoggerFactory.getLogger(Client.class);
 
     static {
@@ -103,7 +106,6 @@ public class Client {
 
     public static String sendRequest(RequestEntity request) throws Exception {
         MessageFuture future = new MessageFuture(request);
-        Bootstrap b = null;
         if (client.needInit()) {
             client.init();
         }

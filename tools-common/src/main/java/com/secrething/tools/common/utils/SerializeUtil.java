@@ -4,20 +4,23 @@ import com.dyuproject.protostuff.LinkedBuffer;
 import com.dyuproject.protostuff.ProtostuffIOUtil;
 import com.dyuproject.protostuff.runtime.RuntimeSchema;
 
+import static com.dyuproject.protostuff.LinkedBuffer.allocate;
+
 /**
  * Created by liuzengzeng on 2017/12/10.
  */
 public class SerializeUtil {
 
+
     public static <T> byte[] serialize(T t) {
         try {
             Assert.notNull(t);
-            Class<T> clzz = (Class<T>) t.getClass();
-            RuntimeSchema<T> schema = RuntimeSchema.createFrom(clzz);
-            byte[] bs = ProtostuffIOUtil.toByteArray(t, schema, LinkedBuffer.allocate(LinkedBuffer.DEFAULT_BUFFER_SIZE));
-            return bs;
+            Class<T> clazz = (Class<T>) t.getClass();
+
+            RuntimeSchema<T> schema = RuntimeSchema.createFrom(clazz);
+            return ProtostuffIOUtil.toByteArray(t, schema, allocate(LinkedBuffer.DEFAULT_BUFFER_SIZE));
         } catch (Exception e) {
-            return null;
+            throw new IllegalArgumentException(e);
         }
     }
 
@@ -30,7 +33,7 @@ public class SerializeUtil {
             ProtostuffIOUtil.mergeFrom(bs, t, schema);
             return t;
         } catch (Exception e) {
-            return null;
+            throw new IllegalArgumentException(e);
         }
     }
 }
