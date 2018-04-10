@@ -31,7 +31,8 @@ public class Client {
     static LoadingCache<String,MessageFuture> loadingCache = CacheBuilder.build(16384,1,TimeUnit.MINUTES);
     public static final ConcurrentMap<String, MessageFuture> futureConcurrentMap = loadingCache.asMap();
     public static final Logger logger = LoggerFactory.getLogger(Client.class);
-
+    private String host = "";
+    private int port = -1;
     static {
         String fromPro = ConfigProp.getConfig("proxy_ip");
         if (StringUtils.isBlank(fromPro)) {
@@ -55,6 +56,10 @@ public class Client {
 
     private Client() {
     }
+    private Client(String host,int port) {
+        this.host = host;
+        this.port = port;
+    }
 
     private volatile EventLoopGroup workerGroup = null;
     private volatile Channel channel = null;
@@ -68,6 +73,7 @@ public class Client {
             workerGroup = new NioEventLoopGroup();
             b.group(workerGroup);
             b.channel(NioSocketChannel.class);
+            b.remoteAddress(proxy_ip,proxy_prot);
             b.option(ChannelOption.SO_KEEPALIVE, Boolean.valueOf(true));
             b.handler(new ClientInitializer());
             bootstrap = b;
@@ -81,7 +87,7 @@ public class Client {
 
     private void connect(Bootstrap b) throws InterruptedException {
         if (null == this.channel){
-            ChannelFuture f = b.connect(proxy_ip, proxy_prot).sync().syncUninterruptibly();
+            ChannelFuture f = b.connect().sync().syncUninterruptibly();
             f.channel().closeFuture().addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
@@ -137,9 +143,6 @@ public class Client {
         String request = "{\"type\":\"0\",\"cid\":\"tuniu\",\"tripType\":\"1\",\"fromCity\":\"BKK\",\"toCity\":\"HKT\",\"fromDate\":\"20180421\",\"all\":\"\",\"adultNum\":\"1\",\"childNum\":\"0\",\"infantNumber\":\"0\",\"retDate\":\"\"}";
         int waitTime = 60000;
         String res = ProxyHttpPoolManage.sendJsonPostRequest(url, request, waitTime);
-        System.out.println(res);
-        Thread.sleep(18000);
-        res = ProxyHttpPoolManage.sendJsonPostRequest(url, request, waitTime);
         System.out.println(res);
     }
 }
