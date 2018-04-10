@@ -82,9 +82,12 @@ public class Client {
     private void connect(Bootstrap b) throws InterruptedException {
         if (null == this.channel){
             ChannelFuture f = b.connect(proxy_ip, proxy_prot).sync().syncUninterruptibly();
-            f.channel().closeFuture().addListener((ChannelFutureListener) future -> {
-                logger.info("connection closed");
-                channel = null;
+            f.channel().closeFuture().addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture future) throws Exception {
+                    logger.info("connection closed");
+                    channel = null;
+                }
             });
             this.channel = f.channel();
         }
