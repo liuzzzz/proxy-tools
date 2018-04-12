@@ -12,6 +12,7 @@
         <module>tools-client</module>
         <module>tools-server</module>
         <module>tools-ws-server</module>
+        <module>tools-local</module>
     </modules>
     <packaging>pom</packaging>
     <build>
