@@ -12,6 +12,7 @@
         <module>tools-client</module>
         <module>tools-server</module>
         <module>tools-ws-server</module>
+        <module>tools-local</module>
     </modules>
     <packaging>pom</packaging>
     <build>
@@ -21,8 +22,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>2.3.2</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>1.7</source>
+                    <target>1.7</target>
                 </configuration>
             </plugin>
         </plugins>

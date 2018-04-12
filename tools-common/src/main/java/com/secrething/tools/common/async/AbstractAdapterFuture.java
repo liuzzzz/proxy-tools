@@ -72,12 +72,17 @@ public abstract class AbstractAdapterFuture<R> implements Future<R> {
         }
     }
 
-    protected void addAsyncCallback(final Executor taskExecutor,IFutureCallback callback) {
+    protected void addAsyncCallback(final Executor taskExecutor,final IFutureCallback callback) {
         if (null == taskExecutor || null == callback)
             throw new NullPointerException("executor or callback can not be null");
         synchronized (asyncCallbacks) {
             if (isDone()) {
-                taskExecutor.execute(callback::call);
+                taskExecutor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.call();
+                    }
+                });
                 return;
             }
             asyncCallbacks.add(new AsyncCallProxy(taskExecutor, callback));

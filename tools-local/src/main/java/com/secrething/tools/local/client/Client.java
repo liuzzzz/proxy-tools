@@ -1,4 +1,4 @@
-package com.secrething.tools.client;
+package com.secrething.tools.local.client;
 
 import com.google.common.cache.LoadingCache;
 import com.secrething.tools.common.contant.ConfigProp;
@@ -8,8 +8,12 @@ import com.secrething.tools.common.protocol.RequestEntity;
 import com.secrething.tools.common.protocol.ResponseEntity;
 import com.secrething.tools.common.utils.CacheBuilder;
 import com.secrething.tools.common.utils.SerializeUtil;
+import com.secrething.tools.local.MessageFuture;
+import com.secrething.tools.local.ProxyHttpPoolManage;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
+import io.netty.channel.local.LocalAddress;
+import io.netty.channel.local.LocalChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import org.apache.commons.lang3.StringUtils;
@@ -106,13 +110,11 @@ public class Client {
         try {
             initMark.set(true);
             Bootstrap b = new Bootstrap();
-            workerGroup = new NioEventLoopGroup();
+            workerGroup = new DefaultEventLoopGroup();
             b.group(workerGroup);
-            b.channel(NioSocketChannel.class);
-            b.remoteAddress(proxy_ip, proxy_prot);
-            b.option(ChannelOption.SO_KEEPALIVE, Boolean.valueOf(true));
+            b.channel(LocalChannel.class);
+            b.remoteAddress(new LocalAddress("hello"));
             b.handler(new ClientInitializer());
-            bootstrap = b;
             this.channelPool = new ChannelPool(b);
         } catch (Exception e) {
         }
@@ -137,14 +139,6 @@ public class Client {
     }
 
     private void sendRequest(MessageProtocol protocol) {
-        /*if (null == channel){
-            try {
-                connect(bootstrap);
-            }catch (Exception e){
-                return;
-            }
-
-        }*/
         try {
             final Channel channel = channelPool.getResource();
             channel.writeAndFlush(protocol).addListener(new ChannelFutureListener() {

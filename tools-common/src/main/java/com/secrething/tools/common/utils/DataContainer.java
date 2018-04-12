@@ -47,6 +47,25 @@ public class DataContainer<K, D> {
 
     static Sync unlock() {
         return new Sync() {
+            @Override
+            public void locakRead() {
+
+            }
+
+            @Override
+            public void unlockRead() {
+
+            }
+
+            @Override
+            public void lockWrite() {
+
+            }
+
+            @Override
+            public void unlockWrite() {
+
+            }
         };
     }
 
@@ -66,7 +85,12 @@ public class DataContainer<K, D> {
     }
 
     public final D getData() {
-        return lockRead(() -> data);
+        return lockRead(new Caller<D>() {
+            @Override
+            public D call() {
+                return data;
+            }
+        });
 
     }
 
@@ -89,8 +113,11 @@ public class DataContainer<K, D> {
     }
 
     public final Map<K, DataContainer<K, D>> getNodes() {
-        return lockRead(() -> {
-            return children;
+        return lockRead(new Caller<Map<K, DataContainer<K, D>>>() {
+            @Override
+            public Map<K, DataContainer<K, D>> call() {
+                return children;
+            }
         });
     }
 
@@ -149,11 +176,21 @@ public class DataContainer<K, D> {
         if (null == keys || keys.length < 1 || null == children)
             return null;
         else if (keys.length == 1) {
-            return lockWrite(() -> children.remove(keys[0]));
+            return lockWrite(new Caller<DataContainer<K, D>>() {
+                @Override
+                public DataContainer<K, D> call() {
+                    return children.remove(keys[0]);
+                }
+            });
         }
         K[] parent = selectParentKeys(keys.length - 1, keys);
         final DataContainer<K, D> node = getNode(parent);
-        return lockWrite(() -> node == null ? null : node.children.remove(keys[keys.length - 1]));
+        return lockWrite(new Caller<DataContainer<K, D>>() {
+            @Override
+            public DataContainer<K, D> call() {
+                return node == null ? null : node.children.remove(keys[keys.length - 1]);
+            }
+        });
 
     }
 
@@ -177,7 +214,12 @@ public class DataContainer<K, D> {
     }
 
     private boolean hasChildren() {
-        return lockRead(() -> null != children && !children.isEmpty());
+        return lockRead(new Caller<Boolean>() {
+            @Override
+            public Boolean call() {
+                return null != children && !children.isEmpty();
+            }
+        });
     }
 
     /**
@@ -208,31 +250,39 @@ public class DataContainer<K, D> {
 
     private DataContainer<K, D> putSplitKey(final K key, final D data, final K... parentKeys) {
         final DataContainer<K, D> curr = this;
-        return lockWrite(() -> {
-                    DataContainer<K, D> node = curr.createChild(data);
-                    return putBase(key, node, parentKeys);
-                }
-        );
+        return lockWrite(new Caller<DataContainer<K, D>>() {
+            @Override
+            public DataContainer<K, D> call() {
+                DataContainer<K, D> node = curr.createChild(data);
+                return putBase(key, node, parentKeys);
+            }
+        });
     }
 
     private DataContainer<K, D> getNodeSplitKey(final K key, final K... parentKeys) {
-        return lockRead(() -> {
-            if (null != parentKeys && parentKeys.length > 0) {
-                DataContainer<K, D> node = findNode(parentKeys); //循环方式
-                if (null == node || null == node.children)
-                    return null;
-                return node.children.get(key);
+        return lockRead(new Caller<DataContainer<K, D>>() {
+            @Override
+            public DataContainer<K, D> call() {
+                if (null != parentKeys && parentKeys.length > 0) {
+                    DataContainer<K, D> node = findNode(parentKeys); //循环方式
+                    if (null == node || null == node.children)
+                        return null;
+                    return node.children.get(key);
+                }
+                return children.get(key);
             }
-            return children.get(key);
         });
     }
 
     private D getNodeDataSplitKey(final K key, final K... parentKeys) {
-        return lockRead(() -> {
-            DataContainer<K, D> node = getNodeSplitKey(key, parentKeys);
-            if (null == node)
-                return null;
-            return node.getData();
+        return lockRead(new Caller<D>() {
+            @Override
+            public D call() {
+                DataContainer<K, D> node = getNodeSplitKey(key, parentKeys);
+                if (null == node)
+                    return null;
+                return node.getData();
+            }
         });
     }
 
@@ -254,17 +304,13 @@ public class DataContainer<K, D> {
     }
 
     interface Sync {
-        default void locakRead() {
-        }
+        void locakRead();
 
-        default void unlockRead() {
-        }
+        void unlockRead();
 
-        default void lockWrite() {
-        }
+        void lockWrite();
 
-        default void unlockWrite() {
-        }
+        void unlockWrite();
     }
 
     static class RealLock extends ReentrantReadWriteLock implements Sync {
