@@ -36,7 +36,7 @@ public class ServerHeartHandler extends SimpleChannelInboundHandler<MessageProto
                 } else {
                     logger.info("five heartbeat cycles not read, so colse this channel");
                     times = 0;
-                    ctx.close();
+                    ctx.channel().disconnect();
                 }
 
             }
