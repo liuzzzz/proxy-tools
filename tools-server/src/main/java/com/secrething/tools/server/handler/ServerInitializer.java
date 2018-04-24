@@ -4,6 +4,7 @@ import com.secrething.tools.common.contant.ConfigProp;
 import com.secrething.tools.common.protocol.ProtocolDecoder;
 import com.secrething.tools.common.protocol.ProtocolEncoder;
 import com.secrething.tools.common.utils.NumberCastUtil;
+import com.secrething.tools.server.service.ProcessService;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
@@ -16,6 +17,11 @@ public class ServerInitializer extends ChannelInitializer<SocketChannel> {
     public static final String WRITE_TIMEOUT_SECOND = "write_timeout_second";
     public static final String ALL_TIMEOUT_SECOND = "all_timeout_second";
     public static final String MAX_TIMEOUT_TIMES = "max_timeout_times";
+    private final ProcessService processService;
+
+    public ServerInitializer(ProcessService processService) {
+        this.processService = processService;
+    }
 
     @Override
     public void initChannel(SocketChannel ch) throws Exception {
@@ -27,6 +33,6 @@ public class ServerInitializer extends ChannelInitializer<SocketChannel> {
         ch.pipeline().addLast("mesgEncoder", new ProtocolEncoder());
         ch.pipeline().addLast("mesgDecoder", new ProtocolDecoder());
         ch.pipeline().addLast("readWriteAllListener", new ServerHeartHandler(maxTimeoutTimes));
-        ch.pipeline().addLast("serverSocketHandler", new ServerSocketHandler());
+        ch.pipeline().addLast("serverSocketHandler", new ServerSocketHandler(processService));
     }
 }
