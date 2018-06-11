@@ -7,6 +7,7 @@ import com.secrething.tools.common.protocol.MessageProtocol;
 import com.secrething.tools.common.protocol.RequestEntity;
 import com.secrething.tools.common.protocol.ResponseEntity;
 import com.secrething.tools.common.utils.CacheBuilder;
+import com.secrething.tools.common.utils.MesgFormatter;
 import com.secrething.tools.common.utils.SerializeUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -18,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -51,6 +53,7 @@ public class Client {
             proxy_prot = p;
 
         }
+        client.init();
 
     }
 
@@ -59,21 +62,22 @@ public class Client {
     private volatile EventLoopGroup workerGroup = null;
     private volatile Channel channel = null;
     private volatile Bootstrap bootstrap = null;
-    private AtomicBoolean initMark = new AtomicBoolean();
+    private volatile boolean initMark = false;
     private ChannelPool channelPool = null;
+
     private Client() {
+        //init();
     }
 
     private Client(String host, int port) {
+        this();
         this.host = host;
         this.port = port;
     }
 
     public static String sendRequest(RequestEntity request) throws Exception {
         MessageFuture future = new MessageFuture(request);
-        if (client.needInit()) {
-            client.init();
-        }
+
         try {
             byte[] content = SerializeUtil.serialize(request);
             int contentLength = content.length;
@@ -95,31 +99,49 @@ public class Client {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        String url = "http://59.110.6.12:8080/tuniuhm/search";
-        String request = "{\"type\":\"0\",\"cid\":\"tuniu\",\"tripType\":\"1\",\"fromCity\":\"BKK\",\"toCity\":\"HKT\",\"fromDate\":\"20180421\",\"all\":\"\",\"adultNum\":\"1\",\"childNum\":\"0\",\"infantNumber\":\"0\",\"retDate\":\"\"}";
-        int waitTime = 60000;
-        String res = ProxyHttpPoolManage.sendJsonPostRequest(url, request, waitTime);
-        System.out.println(res);
+        final CountDownLatch latch = new CountDownLatch(9);
+        for (int i = 0; i < 9; i++) {
+            Thread.sleep(500);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    String url = "http://101.201.42.163:8091/mondee/search";
+                    String request = "{\"type\":\"0\",\"cid\":\"tuniu\",\"tripType\":\"1\",\"fromCity\":\"BKK\",\"toCity\":\"HKT\",\"fromDate\":\"20180421\",\"all\":\"\",\"adultNum\":\"1\",\"childNum\":\"0\",\"infantNumber\":\"0\",\"retDate\":\"\",\"maxWaitTime\":20000}";
+                    int waitTime = 60000;
+                    String res = ProxyHttpPoolManage.sendJsonPostRequest(url, request, waitTime);
+                    System.out.println(res);
+                    latch.countDown();
+                }
+            }).start();
+        }
+        latch.await();
+        client.channelPool.close();
     }
 
-    private void init() throws Exception {
+    private void init() {
         try {
-            initMark.set(true);
-            Bootstrap b = new Bootstrap();
-            workerGroup = new NioEventLoopGroup();
-            b.group(workerGroup);
-            b.channel(NioSocketChannel.class);
-            b.remoteAddress(proxy_ip, proxy_prot);
-            b.option(ChannelOption.SO_KEEPALIVE, Boolean.valueOf(true));
-            b.handler(new ClientInitializer());
-            bootstrap = b;
-            this.channelPool = new ChannelPool(b);
+            synchronized (this) {
+                if (client.needInit()) {
+                    initMark = true;
+                    Bootstrap b = new Bootstrap();
+                    workerGroup = new NioEventLoopGroup();
+                    b.group(workerGroup);
+                    b.channel(NioSocketChannel.class);
+                    b.remoteAddress(proxy_ip, proxy_prot);
+                    b.option(ChannelOption.SO_KEEPALIVE, Boolean.valueOf(true));
+                    b.handler(new ClientInitializer());
+                    bootstrap = b;
+                    this.channelPool = new ChannelPool(b);
+                }
+            }
+
         } catch (Exception e) {
         }
     }
 
     private boolean needInit() {
-        return !initMark.get();
+        return !initMark;
+
     }
 
     private void connect(Bootstrap b) throws InterruptedException {
@@ -137,16 +159,16 @@ public class Client {
     }
 
     private void sendRequest(MessageProtocol protocol) {
-        /*if (null == channel){
-            try {
-                connect(bootstrap);
-            }catch (Exception e){
-                return;
-            }
-
-        }*/
         try {
+            long begin = System.currentTimeMillis();
             final Channel channel = channelPool.getResource();
+            MesgFormatter.println("getResourceCost:{}",System.currentTimeMillis() - begin);
+            synchronized (channelPool){
+                MesgFormatter.println("create:{}",channelPool.getCreatedCount());
+                MesgFormatter.println("borrow:{}",channelPool.getBorrowedCount());
+                MesgFormatter.println("total:{}",channelPool.getMaxTotal());
+
+            }
             channel.writeAndFlush(protocol).addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
