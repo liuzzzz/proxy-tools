@@ -15,12 +15,12 @@ public class ServerBootstrapFactory {
         throw new UnsupportedOperationException("instance not support");
     }
 
-    public final static ServerBootstrap newNioServerBootstrap() {
+    public static ServerBootstrap newNioServerBootstrap() {
         ServerBootstrap b = new ServerBootstrap();
         return b.group(new NioEventLoopGroup(), new NioEventLoopGroup()).channel(NioServerSocketChannel.class);
     }
 
-    public final static ServerBootstrap newEpollServerBootstrap() {
+    public static ServerBootstrap newEpollServerBootstrap() {
         ServerBootstrap b = new ServerBootstrap();
         return b.group(new EpollEventLoopGroup(), new EpollEventLoopGroup()).channel(EpollServerSocketChannel.class);
     }
