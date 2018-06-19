@@ -8,8 +8,6 @@ import org.apache.commons.lang3.StringUtils;
  */
 public abstract class MesgFormatter {
     private static final String PLACE_HOLDER = "{}";
-    static int split = PLACE_HOLDER.length();
-
     /**
      * 字符串拼接,拼接方式如同slf4j日志的输出方式
      * 例: format("h{}ll{}","e","o") return hello
@@ -30,6 +28,7 @@ public abstract class MesgFormatter {
         if (idx < 0)
             return pattern;
         StringBuilder builder = new StringBuilder();
+        int split = hoder.length();
         for (int i = 0; i < params.length && idx > -1; i++) {
             int len = idx - offset;
             if (len > 0)
