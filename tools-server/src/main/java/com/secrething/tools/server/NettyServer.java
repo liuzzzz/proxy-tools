@@ -25,15 +25,8 @@ public abstract class NettyServer {
         this.port = port;
     }
 
-    public static void main(String[] args) throws Exception {
-        int port = 9999;
-        if (args.length == 1) {
-            port = Integer.valueOf(args[0]).intValue();
-        }
 
-    }
 
-    public abstract NettyServer getInstance();
     public abstract ProcessService getProcessService();
     public void run() throws Exception {
         //暂时只用 nio方式吧

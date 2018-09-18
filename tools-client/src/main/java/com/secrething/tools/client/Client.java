@@ -99,16 +99,15 @@ public class Client {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        final CountDownLatch latch = new CountDownLatch(9);
-        for (int i = 0; i < 9; i++) {
-            Thread.sleep(500);
+        final CountDownLatch latch = new CountDownLatch(1);
+        for (int i = 0; i < 1; i++) {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    String url = "http://101.201.42.163:8091/mondee/search";
+                    String url = "http://www.baidu.com";
                     String request = "{\"type\":\"0\",\"cid\":\"tuniu\",\"tripType\":\"1\",\"fromCity\":\"BKK\",\"toCity\":\"HKT\",\"fromDate\":\"20180421\",\"all\":\"\",\"adultNum\":\"1\",\"childNum\":\"0\",\"infantNumber\":\"0\",\"retDate\":\"\",\"maxWaitTime\":20000}";
                     int waitTime = 60000;
-                    String res = ProxyHttpPoolManage.sendJsonPostRequest(url, request, waitTime);
+                    String res = ProxyHttpPoolManage.sendGetRequest(url, waitTime);
                     System.out.println(res);
                     latch.countDown();
                 }
